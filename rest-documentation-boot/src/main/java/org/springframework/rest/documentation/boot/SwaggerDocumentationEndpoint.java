@@ -30,6 +30,7 @@ import org.springframework.http.MediaType;
 import org.springframework.rest.documentation.model.Endpoint;
 import org.springframework.rest.documentation.model.Outcome;
 import org.springframework.rest.documentation.model.Parameter;
+import org.springframework.rest.documentation.model.ParameterType;
 
 import com.wordnik.swagger.core.Documentation;
 import com.wordnik.swagger.core.DocumentationAllowableValues;
@@ -40,7 +41,7 @@ import com.wordnik.swagger.core.DocumentationParameter;
 
 @ConfigurationProperties(name = "endpoints.swagger-documentation", ignoreUnknownFields = false)
 public class SwaggerDocumentationEndpoint extends AbstractEndpoint<Documentation> implements
-		ApplicationContextAware {
+ApplicationContextAware {
 
 	private RestDocumentationView restDocumentationView = new RestDocumentationView();
 
@@ -62,7 +63,7 @@ public class SwaggerDocumentationEndpoint extends AbstractEndpoint<Documentation
 	public Documentation invoke() {
 		org.springframework.rest.documentation.model.Documentation documentation = this.restDocumentationView.getSnapshot();
 		Documentation swaggerDocumentation = new Documentation("Unknown", "1.2", "/", "/");
-		Map<String, List<Endpoint>> endpointsByPath = new HashMap<String, List<Endpoint>>();		
+		Map<String, List<Endpoint>> endpointsByPath = new HashMap<String, List<Endpoint>>();
 		for (Endpoint endpoint: documentation.getEndpoints()) {
 			List<Endpoint> endpoints = endpointsByPath.get(endpoint.getUriPattern());
 			if (endpoints == null) {
@@ -71,11 +72,11 @@ public class SwaggerDocumentationEndpoint extends AbstractEndpoint<Documentation
 			}
 			endpoints.add(endpoint);
 		}
-		
+
 		int nicknameCounter = 0;
 		int operationsCounter = 0;
-		
-		for (Map.Entry<String, List<Endpoint>> entry: endpointsByPath.entrySet()) {			
+
+		for (Map.Entry<String, List<Endpoint>> entry: endpointsByPath.entrySet()) {
 			DocumentationEndPoint documentationEndPoint = new DocumentationEndPoint(entry.getKey(), "Description " + operationsCounter++);
 			for (Endpoint endpoint: entry.getValue()) {
 				DocumentationOperation documentationOperation = new DocumentationOperation(endpoint.getRequestMethod().name(), "", "");
@@ -87,7 +88,7 @@ public class SwaggerDocumentationEndpoint extends AbstractEndpoint<Documentation
 				}
 				for (Parameter parameter: endpoint.getParameters()) {
 					DocumentationAllowableValues allowableValues = null;
-					DocumentationParameter documentationParameter = new DocumentationParameter(parameter.getName(), parameter.getDescription(), "", "path", null, allowableValues, true, false);
+					DocumentationParameter documentationParameter = new DocumentationParameter(parameter.getName(), parameter.getDescription(), "", getParamType(parameter), null, allowableValues, parameter.isRequired(), false);
 					documentationParameter.setDataType("integer");
 					documentationOperation.addParameter(documentationParameter);
 				}
@@ -96,5 +97,19 @@ public class SwaggerDocumentationEndpoint extends AbstractEndpoint<Documentation
 			swaggerDocumentation.addApi(documentationEndPoint);
 		}
 		return swaggerDocumentation;
+	}
+
+	private String getParamType(Parameter parameter) {
+		ParameterType parameterType = parameter.getParameterType();
+
+		if (parameterType == ParameterType.BODY) {
+			return "body";
+		} else if (parameterType == ParameterType.REQUEST_PARAMETER) {
+			return "query";
+		} else if (parameterType == ParameterType.PATH) {
+			return "path";
+		} else {
+			throw new IllegalArgumentException("Parameter has an unsupported type");
+		}
 	}
 }

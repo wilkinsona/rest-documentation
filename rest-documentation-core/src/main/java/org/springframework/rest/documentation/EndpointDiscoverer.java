@@ -16,6 +16,7 @@
 
 package org.springframework.rest.documentation;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -26,6 +27,7 @@ import java.util.Set;
 import org.springframework.context.ApplicationContext;
 import org.springframework.core.DefaultParameterNameDiscoverer;
 import org.springframework.core.MethodParameter;
+import org.springframework.core.ParameterNameDiscoverer;
 import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.http.HttpStatus;
 import org.springframework.rest.documentation.javadoc.ClassDescriptor;
@@ -37,7 +39,10 @@ import org.springframework.rest.documentation.model.Outcome;
 import org.springframework.rest.documentation.model.Parameter;
 import org.springframework.rest.documentation.model.ParameterType;
 import org.springframework.util.Assert;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.mvc.method.RequestMappingInfo;
@@ -47,11 +52,13 @@ import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandl
  * @author awilkinson
  */
 public class EndpointDiscoverer {
-	
+
+	private final ParameterNameDiscoverer parameterNameDiscoverer = new DefaultParameterNameDiscoverer();
+
 	private final Javadoc javadoc;
-	
+
 	private final ApplicationContext applicationContext;
-	
+
 	private final ResponseStatusResolver responseStatusResolver;
 
 	public EndpointDiscoverer(Javadoc javadoc, ApplicationContext applicationContext) {
@@ -66,21 +73,21 @@ public class EndpointDiscoverer {
 
 		Map<RequestMappingInfo, HandlerMethod> handlerMethods = mapping
 				.getHandlerMethods();
-		
+
 		List<Endpoint> endpoints = new ArrayList<Endpoint>(handlerMethods.size());
 
 		for (Map.Entry<RequestMappingInfo, HandlerMethod> entry : handlerMethods
 				.entrySet()) {
 			HandlerMethod handlerMethod = entry.getValue();
 			if (shouldBeDocumented(handlerMethod)) {
-				RequestMappingInfo requestMappingInfo = entry.getKey();	
+				RequestMappingInfo requestMappingInfo = entry.getKey();
 				endpoints.add(createEndpoint(handlerMethod, requestMappingInfo, this.javadoc));
 			}
 		}
-		
+
 		return endpoints;
 	}
-	
+
 	private boolean shouldBeDocumented(HandlerMethod handlerMethod) {
 		return !handlerMethod.getMethod().getDeclaringClass().getName().startsWith("org.springframework");
 	}
@@ -88,9 +95,9 @@ public class EndpointDiscoverer {
 	private Endpoint createEndpoint(HandlerMethod handlerMethod,
 			RequestMappingInfo requestMappingInfo, Javadoc api) {
 		Class<?> clazz = handlerMethod.getMethod().getDeclaringClass();
-		
+
 		ClassDescriptor classDescriptor = api.getClassDescriptor(clazz);
-		
+
 		if (classDescriptor == null) {
 			System.out.println(clazz);
 		}
@@ -112,24 +119,58 @@ public class EndpointDiscoverer {
 
 		for (MethodParameter methodParameter : handlerMethod.getMethodParameters()) {
 			methodParameter
-					.initParameterNameDiscovery(new DefaultParameterNameDiscoverer());
+			.initParameterNameDiscovery(this.parameterNameDiscoverer);
 			String name = methodParameter.getParameterName();
-			boolean required = true;
-			ParameterType parameterType = ParameterType.PATH;
-			String description = methodDescriptor.getParameterDescriptor(name)
-					.getDescription();
-			parameters.add(new Parameter(methodParameter.getParameterName(), required,
-					parameterType, description));
 
+			Annotation[] annotations = methodParameter.getMethod().getParameterAnnotations()[methodParameter.getParameterIndex()];
+			PathVariable pathVariable = getAnnotation(annotations, PathVariable.class);
+
+			ParameterType parameterType = null;
+			boolean required = true;
+
+			if (pathVariable != null) {
+				parameterType = ParameterType.PATH;
+				required = true;
+			} else {
+				RequestParam requestParam = getAnnotation(annotations, RequestParam.class);
+				if (requestParam != null) {
+					parameterType = ParameterType.REQUEST_PARAMETER;
+					required = requestParam.required();
+				} else {
+					RequestBody requestBody = getAnnotation(annotations, RequestBody.class);
+					if (requestBody != null) {
+						parameterType = ParameterType.BODY;
+						required = requestBody.required();
+					}
+				}
+			}
+
+			if (parameterType != null) {
+				String description = methodDescriptor.getParameterDescriptor(name)
+						.getDescription();
+
+				parameters.add(new Parameter(methodParameter.getParameterName(), required,
+						parameterType, description));
+			}
 		}
 
 		return parameters;
 	}
 
+	@SuppressWarnings("unchecked")
+	private <T extends Annotation> T getAnnotation(Annotation[] annotations, Class<T> toFind) {
+		for (Annotation annotation: annotations) {
+			if (annotation.annotationType().equals(toFind)) {
+				return (T) annotation;
+			}
+		}
+		return null;
+	}
+
 	private List<Outcome> getOutcomes(HandlerMethod handlerMethod,
 			MethodDescriptor methodDescriptor) {
 		List<Outcome> outcomes = new ArrayList<Outcome>();
-		
+
 		ResponseStatus successResponseStatus = AnnotationUtils.findAnnotation(handlerMethod.getMethod(), ResponseStatus.class);
 		if (successResponseStatus == null) {
 			outcomes.add(new Outcome(HttpStatus.OK, "Success"));
@@ -146,8 +187,8 @@ public class EndpointDiscoverer {
 			if (outcome != null) {
 				outcomes.add(outcome);
 			}
-		}				
-		
+		}
+
 		return outcomes;
 	}
 
@@ -165,7 +206,7 @@ public class EndpointDiscoverer {
 
 	private Outcome createOutcome(Class<? extends Exception> exceptionClass,
 			ThrowsDescriptor descriptor, HandlerMethod handler) {
-								
+
 		ResponseStatus annotation = this.responseStatusResolver.resolveResponseStatus(exceptionClass, handler);
 		if (annotation != null) {
 			HttpStatus status = annotation.value();
@@ -194,7 +235,7 @@ public class EndpointDiscoverer {
 					.getThrowsDescriptor(exceptionType);
 			errorCauses.add(new ErrorCause(exceptionType, throwsDescriptor));
 		}
-				
+
 		for (ThrowsDescriptor throwsDescriptor: methodDescriptor.getThrowsDescriptors()) {
 			try {
 				errorCauses.add(new ErrorCause((Class<? extends Exception>)Class.forName(throwsDescriptor.getException()), throwsDescriptor));

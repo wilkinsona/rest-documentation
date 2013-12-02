@@ -21,6 +21,6 @@ package org.springframework.rest.documentation.model;
  */
 public enum ParameterType {
 
-	PATH, QUERY;
+	BODY, PATH, REQUEST_PARAMETER;
 
 }
