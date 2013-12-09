@@ -18,6 +18,8 @@ package org.springframework.rest.documentation;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -98,10 +100,6 @@ public class EndpointDiscoverer {
 
 		ClassDescriptor classDescriptor = api.getClassDescriptor(clazz);
 
-		if (classDescriptor == null) {
-			System.out.println(clazz);
-		}
-
 		MethodDescriptor methodDescriptor = classDescriptor
 				.getMethodDescriptor(handlerMethod.getMethod());
 
@@ -109,8 +107,22 @@ public class EndpointDiscoverer {
 
 		List<Parameter> parameters = getParameters(handlerMethod, methodDescriptor);
 
+		Type returnType = handlerMethod.getMethod().getGenericReturnType();
+
+		String returnTypeClass;
+
+		if (returnType instanceof ParameterizedType) {
+			returnType =  ((ParameterizedType) returnType).getActualTypeArguments()[0];
+		}
+
+		if (returnType.equals(Void.class)) {
+			returnTypeClass = null;
+		} else {
+			returnTypeClass = ((Class<?>)returnType).getName();
+		}
+
 		return new Endpoint(getHttpMethod(requestMappingInfo),
-				getUriPattern(requestMappingInfo), outcomes, parameters);
+				getUriPattern(requestMappingInfo), returnTypeClass, methodDescriptor.getSummary(), methodDescriptor.getDescription(), outcomes, parameters);
 	}
 
 	private List<Parameter> getParameters(HandlerMethod handlerMethod,
@@ -149,7 +161,7 @@ public class EndpointDiscoverer {
 				String description = methodDescriptor.getParameterDescriptor(name)
 						.getDescription();
 
-				parameters.add(new Parameter(methodParameter.getParameterName(), required,
+				parameters.add(new Parameter(methodParameter.getParameterName(), ((Class<?>)methodParameter.getGenericParameterType()).getName(), required,
 						parameterType, description));
 			}
 		}

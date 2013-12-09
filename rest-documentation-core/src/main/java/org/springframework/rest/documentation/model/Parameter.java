@@ -24,15 +24,18 @@ public class Parameter {
 
 	private final String name;
 
+	private final String type;
+
 	private final boolean required;
 
 	private final ParameterType parameterType;
 
 	private final String description;
 
-	public Parameter(String name, boolean required, ParameterType parameterType,
+	public Parameter(String name, String type, boolean required, ParameterType parameterType,
 			String description) {
 		this.name = name;
+		this.type = type;
 		this.required = required;
 		this.parameterType = parameterType;
 		this.description = description;
@@ -40,6 +43,10 @@ public class Parameter {
 
 	public String getName() {
 		return this.name;
+	}
+
+	public String getType() {
+		return this.type;
 	}
 
 	public boolean isRequired() {

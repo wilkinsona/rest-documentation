@@ -44,7 +44,11 @@ public class Javadoc {
 		return this.classes;
 	}
 
+	public ClassDescriptor getClassDescriptor(String className) {
+		return this.classesByName.get(className);
+	}
+
 	public ClassDescriptor getClassDescriptor(Class<?> clazz) {
-		return this.classesByName.get(clazz.getName());
+		return getClassDescriptor(clazz.getName());
 	}
 }

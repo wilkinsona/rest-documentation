@@ -16,22 +16,50 @@
 
 package org.springframework.rest.documentation;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.springframework.context.ApplicationContext;
+import org.springframework.rest.documentation.javadoc.ClassDescriptor;
 import org.springframework.rest.documentation.javadoc.Javadoc;
+import org.springframework.rest.documentation.javadoc.MethodDescriptor;
 import org.springframework.rest.documentation.model.Documentation;
+import org.springframework.rest.documentation.model.Endpoint;
 
 public class DocumentationGenerator {
-	
+
 	private final ApplicationContext applicationContext;
-	
+
 	private final Javadoc javadoc;
 
 	public DocumentationGenerator(ApplicationContext applicationContext, Javadoc javadoc) {
 		this.applicationContext = applicationContext;
 		this.javadoc = javadoc;
 	}
-	
-	public Documentation generate() {		
-		return new Documentation(new EndpointDiscoverer(this.javadoc, this.applicationContext).discoverEndpoints());
+
+	public Documentation generate() {
+		List<Endpoint> endpoints = new EndpointDiscoverer(this.javadoc, this.applicationContext).discoverEndpoints();
+		Map<String, ClassDescriptor> responseClasses = new HashMap<String, ClassDescriptor>();
+
+		for (Endpoint endpoint: endpoints) {
+			ClassDescriptor classDescriptor = this.javadoc.getClassDescriptor(endpoint.getReturnType());
+			processClass(classDescriptor, responseClasses);
+		}
+
+		return new Documentation(endpoints, responseClasses);
+	}
+
+	private void processClass(ClassDescriptor classDescriptor, Map<String, ClassDescriptor> responseClasses) {
+		if (classDescriptor != null && !responseClasses.containsKey(classDescriptor.getName())) {
+			responseClasses.put(classDescriptor.getName(),  classDescriptor);
+			for (MethodDescriptor methodDescriptor: classDescriptor.getMethodDescriptors()) {
+				ClassDescriptor returnTypeDescriptor = this.javadoc.getClassDescriptor(methodDescriptor.getReturnType());
+				if (returnTypeDescriptor != null) {
+					processClass(returnTypeDescriptor, responseClasses);
+				}
+			}
+		}
 	}
 }

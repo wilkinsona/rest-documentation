@@ -29,14 +29,23 @@ public class Endpoint {
 
 	private final String uriPattern;
 
+	private final String returnType;
+
+	private final String summary;
+
+	private final String description;
+
 	private final List<Outcome> outcomes;
 
 	private final List<Parameter> parameters;
 
-	public Endpoint(RequestMethod requestMethod, String uriPattern,
-			List<Outcome> outcomes, List<Parameter> parameters) {
+	public Endpoint(RequestMethod requestMethod, String uriPattern, String returnType,
+			String summary, String description, List<Outcome> outcomes, List<Parameter> parameters) {
 		this.requestMethod = requestMethod;
 		this.uriPattern = uriPattern;
+		this.returnType = returnType;
+		this.summary = summary;
+		this.description = description;
 		this.outcomes = outcomes;
 		this.parameters = parameters;
 	}
@@ -47,6 +56,18 @@ public class Endpoint {
 
 	public String getUriPattern() {
 		return this.uriPattern;
+	}
+
+	public String getReturnType() {
+		return this.returnType;
+	}
+
+	public String getSummary() {
+		return summary;
+	}
+
+	public String getDescription() {
+		return this.description;
 	}
 
 	public List<Outcome> getOutcomes() {

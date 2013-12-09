@@ -19,48 +19,40 @@ package org.springframework.rest.documentation.doclet;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.rest.documentation.javadoc.ClassDescriptor;
 import org.springframework.rest.documentation.javadoc.Javadoc;
 import org.springframework.rest.documentation.javadoc.MethodDescriptor;
 import org.springframework.rest.documentation.javadoc.ParameterDescriptor;
 import org.springframework.rest.documentation.javadoc.ThrowsDescriptor;
-import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
 
-import com.sun.javadoc.AnnotationDesc;
 import com.sun.javadoc.ClassDoc;
 import com.sun.javadoc.MethodDoc;
 import com.sun.javadoc.ParamTag;
 import com.sun.javadoc.Parameter;
 import com.sun.javadoc.RootDoc;
 import com.sun.javadoc.ThrowsTag;
+import com.sun.javadoc.Type;
 
 public final class JavadocProcessor {
 
 	Javadoc process(RootDoc rootDoc) {
 		List<ClassDescriptor> classDescriptors = new ArrayList<ClassDescriptor>();
 
-		for (ClassDoc classDoc : rootDoc.classes()) {					
-			if (isController(classDoc)) {
-				classDescriptors.add(processControllerClass(classDoc));
-			}
+		for (ClassDoc classDoc : rootDoc.classes()) {
+			classDescriptors.add(processClass(classDoc));
 		}
 
 		return new Javadoc(classDescriptors);
 	}
 
-	private boolean isController(ClassDoc classDoc) {
-		try {			
-			String className = getClassName(classDoc);
-			Class<?> candidateClass = Class.forName(className);
-			return AnnotationUtils.findAnnotation(candidateClass, Controller.class) != null || AnnotationUtils.findAnnotation(candidateClass, RestController.class) != null;
+	private ClassDescriptor processClass(ClassDoc classDoc) {
+		List<MethodDescriptor> methodDescriptors = new ArrayList<MethodDescriptor>();
+
+		for (MethodDoc methodDoc : classDoc.methods()) {
+			methodDescriptors.add(processMethod(methodDoc));
 		}
-		catch (ClassNotFoundException e) {
-			e.printStackTrace();
-			return false;
-		}
+
+		return new ClassDescriptor(getClassName(classDoc), methodDescriptors);
 	}
 
 	private String getClassName(ClassDoc classDoc) {
@@ -73,34 +65,37 @@ public final class JavadocProcessor {
 		return className;
 	}
 
-	private ClassDescriptor processControllerClass(ClassDoc classDoc) {
-		List<MethodDescriptor> methodDescriptors = new ArrayList<MethodDescriptor>();
-
-		for (MethodDoc methodDoc : classDoc.methods()) {
-			if (isRequestMappingMethod(methodDoc)) {
-				methodDescriptors.add(processMethod(methodDoc));
-			}
-		}
-
-		return new ClassDescriptor(classDoc.qualifiedTypeName(), methodDescriptors);
-	}
-
-	private boolean isRequestMappingMethod(MethodDoc methodDoc) {
-		for (AnnotationDesc annotation : methodDoc.annotations()) {
-			if (RequestMapping.class.getName().equals(
-					annotation.annotationType().qualifiedTypeName())) {
-				return true;
-			}
-		}
-		return false;
-	}
-
 	private MethodDescriptor processMethod(MethodDoc methodDoc) {
 		List<ParameterDescriptor> parameterDescriptors = processParameters(methodDoc);
 		List<ThrowsDescriptor> throwsDescriptors = processThrows(methodDoc);
 
-		return new MethodDescriptor(methodDoc.name(), parameterDescriptors,
+		String commentText = methodDoc.commentText();
+
+		int periodIndex = commentText.indexOf('.');
+
+		String summary;
+		String description;
+
+		if (periodIndex >= 0) {
+			summary = commentText.substring(0, periodIndex);
+			description = commentText.substring(periodIndex + 1);
+		} else {
+			summary = commentText;
+			description = "";
+		}
+
+		return new MethodDescriptor(methodDoc.name(), getClassName(methodDoc.returnType()), summary, description, parameterDescriptors,
 				throwsDescriptors);
+	}
+
+	private String getClassName(Type type) {
+		ClassDoc classDoc = type.asClassDoc();
+		if (classDoc != null) {
+			return getClassName(classDoc);
+		} else {
+			System.out.println(type.getClass() + ": " + type.qualifiedTypeName());
+			return type.qualifiedTypeName();
+		}
 	}
 
 	private List<ParameterDescriptor> processParameters(MethodDoc methodDoc) {

@@ -24,9 +24,15 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 /**
  * @author awilkinson
  */
-public class MethodDescriptor {
+public final class MethodDescriptor {
 
 	private final String name;
+
+	private final String returnType;
+
+	private final String summary;
+
+	private final String description;
 
 	private final List<ParameterDescriptor> parameterDescriptors;
 
@@ -35,15 +41,33 @@ public class MethodDescriptor {
 	@JsonCreator
 	public MethodDescriptor(
 			@JsonProperty("name") String name,
+			@JsonProperty("returnType") String returnType,
+			@JsonProperty("summary") String summary,
+			@JsonProperty("description") String description,
 			@JsonProperty("parameterDescriptors") List<ParameterDescriptor> parameterDescriptors,
 			@JsonProperty("throwsDescriptors") List<ThrowsDescriptor> throwsDescriptors) {
 		this.name = name;
+		this.returnType = returnType;
+		this.summary = summary;
+		this.description = description;
 		this.parameterDescriptors = parameterDescriptors;
 		this.throwsDescriptors = throwsDescriptors;
 	}
 
 	public String getName() {
 		return this.name;
+	}
+
+	public String getReturnType() {
+		return this.returnType;
+	}
+
+	public String getSummary() {
+		return this.summary;
+	}
+
+	public String getDescription() {
+		return this.description;
 	}
 
 	public List<ParameterDescriptor> getParameterDescriptors() {

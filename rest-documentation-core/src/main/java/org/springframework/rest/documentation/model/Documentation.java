@@ -17,16 +17,27 @@
 package org.springframework.rest.documentation.model;
 
 import java.util.List;
+import java.util.Map;
+
+import org.springframework.rest.documentation.javadoc.ClassDescriptor;
 
 public class Documentation {
 
 	private final List<Endpoint> endpoints;
 
-	public Documentation(List<Endpoint> endpoints) {
+	private final Map<String, ClassDescriptor> responseClasses;
+
+	public Documentation(List<Endpoint> endpoints, Map<String, ClassDescriptor> responseClasses) {
 		this.endpoints = endpoints;
+		this.responseClasses = responseClasses;
 	}
 
 	public List<Endpoint> getEndpoints() {
 		return endpoints;
 	}
+
+	public Map<String, ClassDescriptor> getResponseClasses() {
+		return responseClasses;
+	}
+
 }
