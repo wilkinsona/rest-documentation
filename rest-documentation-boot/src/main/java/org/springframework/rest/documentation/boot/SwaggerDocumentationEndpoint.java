@@ -183,13 +183,11 @@ ApplicationContextAware {
 				Class<?> clazz = Class.forName(type);
 
 				if (clazz.isEnum()) {
-					System.out.println("Enum: " + clazz);
 					Object[] enumConstants = clazz.getEnumConstants();
 					List<String> values = new ArrayList<String>();
 					for (Object enumConstant: enumConstants) {
 						values.add(enumConstant.toString());
 					}
-					System.out.println(values);
 					schema.setAllowableValues(new DocumentationAllowableListValues(values));
 				} else {
 					BasicClassIntrospector introspector = new BasicClassIntrospector();
@@ -219,9 +217,8 @@ ApplicationContextAware {
 								propertySchema.setType(getSwaggerDataType(methodDescriptor.getReturnType()));
 								addModelForType(methodDescriptor.getReturnType(), responseClasses, documentation);
 							}
-						} else {
-							System.out.println("No method descriptor for: " + property.getAccessor().getAnnotated() + " of " + propertyName);
 						}
+
 						properties.put(propertyName,  propertySchema);
 					}
 

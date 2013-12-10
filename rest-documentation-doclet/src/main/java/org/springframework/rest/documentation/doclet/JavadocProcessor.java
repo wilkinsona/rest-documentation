@@ -93,7 +93,6 @@ public final class JavadocProcessor {
 		if (classDoc != null) {
 			return getClassName(classDoc);
 		} else {
-			System.out.println(type.getClass() + ": " + type.qualifiedTypeName());
 			return type.qualifiedTypeName();
 		}
 	}
