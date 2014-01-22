@@ -25,6 +25,7 @@
 		<spring.version>4.0.0.RC1</spring.version>
 		<spring-boot.version>0.5.0.M6</spring-boot.version>
 		<swagger.version>1.2.0</swagger.version>
+		<tools-jar>${java.home}/../lib/tools.jar</tools-jar>
 	</properties>
 
 	<dependencyManagement>
@@ -96,5 +97,19 @@
 			</snapshots>
 		</repository>
 	</repositories>
+
+	<profiles>
+		<profile>
+			<id>apple-jdk</id>
+			<activation>
+				<file>
+					<missing>${tools-jar}</missing>
+				</file>
+			</activation>
+			<properties>
+				<tools-jar>${java.home}/../Classes/classes.jar</tools-jar>
+			</properties>
+		</profile>
+	</profiles>
 
 </project>
