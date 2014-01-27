@@ -30,7 +30,7 @@ public class RestDocumentationEndpoint extends AbstractEndpoint<Documentation> i
 	private RestDocumentationView restDocumentationView = new RestDocumentationView();
 
 	public RestDocumentationEndpoint() {
-		super("/rest_documentation");
+		super("rest_documentation");
 	}
 
 	@Override

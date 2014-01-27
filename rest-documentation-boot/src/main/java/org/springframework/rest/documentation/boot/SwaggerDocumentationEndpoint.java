@@ -63,7 +63,7 @@ ApplicationContextAware {
 	private ObjectMapper objectMapper;
 
 	public SwaggerDocumentationEndpoint() {
-		super("/swagger_documentation");
+		super("swagger_documentation");
 	}
 
 	@Override
