@@ -70,8 +70,7 @@ public class EndpointDiscoverer {
 	}
 
 	public List<Endpoint> discoverEndpoints() {
-		RequestMappingHandlerMapping mapping = this.applicationContext
-				.getBean(RequestMappingHandlerMapping.class);
+		RequestMappingHandlerMapping mapping = getRequestMappingHandlerMappingBean();
 
 		Map<RequestMappingInfo, HandlerMethod> handlerMethods = mapping
 				.getHandlerMethods();
@@ -88,6 +87,22 @@ public class EndpointDiscoverer {
 		}
 
 		return endpoints;
+	}
+
+	private RequestMappingHandlerMapping getRequestMappingHandlerMappingBean() {
+		RequestMappingHandlerMapping mapping = null;
+		Map<String, RequestMappingHandlerMapping> beansOfType = this.applicationContext.getBeansOfType(RequestMappingHandlerMapping.class);
+
+		if (beansOfType.size() == 1) {
+			mapping = beansOfType.values().iterator().next();
+		} else {
+			mapping = beansOfType.get("requestMappingHandlerMapping");
+		}
+
+		if (mapping == null) {
+			throw new IllegalStateException("No RequestMappingHandlerMapping bean found in the application context");
+		}
+		return mapping;
 	}
 
 	private boolean shouldBeDocumented(HandlerMethod handlerMethod) {

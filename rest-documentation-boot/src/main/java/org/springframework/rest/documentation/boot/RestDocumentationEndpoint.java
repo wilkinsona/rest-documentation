@@ -21,27 +21,21 @@ import org.springframework.boot.actuate.endpoint.AbstractEndpoint;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
-import org.springframework.http.MediaType;
 import org.springframework.rest.documentation.model.Documentation;
 
-@ConfigurationProperties(name = "endpoints.rest-documentation", ignoreUnknownFields = false)
+@ConfigurationProperties(name = "endpoints.rest_documentation", ignoreUnknownFields = false)
 public class RestDocumentationEndpoint extends AbstractEndpoint<Documentation> implements
 		ApplicationContextAware {
 
 	private RestDocumentationView restDocumentationView = new RestDocumentationView();
 
 	public RestDocumentationEndpoint() {
-		super("/rest-documentation");
+		super("/rest_documentation");
 	}
 
 	@Override
 	public void setApplicationContext(ApplicationContext context) throws BeansException {
 		this.restDocumentationView.setApplicationContext(context);
-	}
-
-	@Override
-	public MediaType[] getProduces() {
-		return new MediaType[] { MediaType.APPLICATION_JSON };
 	}
 
 	@Override

@@ -30,7 +30,6 @@ import org.springframework.boot.actuate.endpoint.AbstractEndpoint;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
-import org.springframework.http.MediaType;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.rest.documentation.javadoc.ClassDescriptor;
@@ -55,7 +54,7 @@ import com.wordnik.swagger.core.DocumentationOperation;
 import com.wordnik.swagger.core.DocumentationParameter;
 import com.wordnik.swagger.core.DocumentationSchema;
 
-@ConfigurationProperties(name = "endpoints.swagger-documentation", ignoreUnknownFields = false)
+@ConfigurationProperties(name = "endpoints.swagger_documentation", ignoreUnknownFields = false)
 public class SwaggerDocumentationEndpoint extends AbstractEndpoint<Documentation> implements
 ApplicationContextAware {
 
@@ -64,7 +63,7 @@ ApplicationContextAware {
 	private ObjectMapper objectMapper;
 
 	public SwaggerDocumentationEndpoint() {
-		super("/swagger-documentation");
+		super("/swagger_documentation");
 	}
 
 	@Override
@@ -78,11 +77,6 @@ ApplicationContextAware {
 				break;
 			}
 		}
-	}
-
-	@Override
-	public MediaType[] getProduces() {
-		return new MediaType[] { MediaType.APPLICATION_JSON };
 	}
 
 	@Override
