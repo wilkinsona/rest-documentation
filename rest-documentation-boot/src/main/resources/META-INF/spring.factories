@@ -1,1 +1,0 @@
-org.springframework.boot.autoconfigure.EnableAutoConfiguration=org.springframework.rest.documentation.boot.RestDocumentationAutoConfiguration,org.springframework.rest.documentation.boot.SwaggerAutoConfiguration
